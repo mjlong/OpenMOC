@@ -201,7 +201,7 @@ void Track::setTrackOutJ(int j) {
 /**
  * @brief Returns whether to give the outgoing flux to the "forward" (false) or
  *        "reverse" (true) direction of the Track reflecting out of this one
- *        along its "forward" direction.
+ *        along its "reverse" direction.
  * @return "forward" (false) "reverse" (true) direction of outgoing Track
  */
 bool Track::isReflIn() const {
@@ -212,7 +212,7 @@ bool Track::isReflIn() const {
 /**
  * @brief Returns whether to give the outgoing flux to the "forward" (false) or
  *        "reverse" (true) direction of the Track reflecting out of this one
- *        along its "reverse" direction.
+ *        along its "forward" direction.
  * @return "forward" (false) "reverse" (true) direction of outgoing Track
  */
 bool Track::isReflOut() const {
