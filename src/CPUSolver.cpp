@@ -625,17 +625,19 @@ FP_PRECISION CPUSolver::computeFSRSources() {
 
     else
       fission_source = 0.0;
-
+    //printf("r=%d,fission=%g\n",r,fission_source);
     /* Compute total scattering source for group G */
     for (int G=0; G < _num_groups; G++) {
       scatter_source = 0;
 
-      for (int g=0; g < _num_groups; g++)
+      for (int g=0; g < _num_groups; g++){
         _scatter_sources(tid,g) = material->getSigmaSByGroupInline(g,G)
                       * _scalar_flux(r,g);
-
+        //printf("    %g*%g=%g\n",material->getSigmaSByGroupInline(g,G),_scalar_flux(r,g),_scatter_sources(tid,g));
+      }
         scatter_source=pairwise_sum<FP_PRECISION>(&_scatter_sources(tid,0),
                                                    _num_groups);
+      //printf("r=%d,G=%d, scatter=%g\n",r,G,scatter_source);
 
       /* Set the total source for FSR r in group G */
       _source(r,G) = (fission_source * chi[G] + scatter_source) *
@@ -693,9 +695,10 @@ void CPUSolver::computeKeff() {
     material = _FSR_materials[r];
     sigma_a = material->getSigmaA();
 
-    for (int e=0; e < _num_groups; e++)
+    for (int e=0; e < _num_groups; e++){
       group_rates[tid+e] = sigma_a[e] * _scalar_flux(r,e);
-
+      printf("%d,%d,flux=%g,abs=%g\n",r,e,_scalar_flux(r,e),sigma_a[e] * _scalar_flux(r,e));
+    }
     FSR_rates[r]=pairwise_sum<FP_PRECISION>(&group_rates[tid], _num_groups);
     FSR_rates[r] *= volume;
   }
@@ -713,9 +716,10 @@ void CPUSolver::computeKeff() {
     material = _FSR_materials[r];
     nu_sigma_f = material->getNuSigmaF();
 
-    for (int e=0; e < _num_groups; e++)
+    for (int e=0; e < _num_groups; e++){
       group_rates[tid+e] = nu_sigma_f[e] * _scalar_flux(r,e);
-
+      printf("%d,%d,flux=%g,fiss=%g\n",r,e,_scalar_flux(r,e),nu_sigma_f[e] * _scalar_flux(r,e));
+    }
     FSR_rates[r]=pairwise_sum<FP_PRECISION>(&group_rates[tid], _num_groups);
     FSR_rates[r] *= volume;
   }
@@ -727,6 +731,7 @@ void CPUSolver::computeKeff() {
   int size = 2 * _tot_num_tracks * _polar_times_groups;
   _leakage = pairwise_sum<FP_PRECISION>(_boundary_leakage, size) * 0.5;
 
+  printf("fiss=%g,abs=%g,L=%g\n",tot_fission,tot_abs,_leakage);
   _k_eff = tot_fission / (tot_abs + _leakage);
 
   log_printf(DEBUG, "abs = %f, fission = %f, leakage = %f, k_eff = %f",
@@ -793,11 +798,12 @@ void CPUSolver::transportSweep() {
 
       /* Loop over each Track segment in forward direction */
       for (int s=0; s < num_segments; s++) {
+        //printf("track %d, seg %d\n",track_id,s);
         curr_segment = &segments[s];
         scalarFluxTally(curr_segment, azim_index, track_flux,
                         thread_fsr_flux,true);
       }
-
+      printf("\t_scalar_flux[0]=%g\n",_scalar_flux[0]);
       /* Transfer boundary angular flux to outgoing Track */
       transferBoundaryFlux(track_id, azim_index, true, track_flux);
 
@@ -811,6 +817,7 @@ void CPUSolver::transportSweep() {
       }
       delete thread_fsr_flux;
 
+      printf("\t_scalar_flux[0]=%g\n",_scalar_flux[0]);
       /* Transfer boundary angular flux to outgoing Track */
       transferBoundaryFlux(track_id, azim_index, false, track_flux);
     }
@@ -856,11 +863,15 @@ void CPUSolver::scalarFluxTally(segment* curr_segment,
     for (int p=0; p < _num_polar; p++){
       exponential = computeExponential(sigma_t[e], length, p);
       delta_psi = (track_flux(p,e)-_reduced_source(fsr_id,e))*exponential;
+      //printf("ang=%d,e=%d, (%g-%g(s=%g))*(1-exp(-%g*%g/%g))=%g\n",azim_index,e,track_flux(p,e),_reduced_source(fsr_id,e),_source(fsr_id,e),sigma_t[e],length,_quad->getSinTheta(p),delta_psi);
+
       fsr_flux[e] += delta_psi * _polar_weights(azim_index,p);
+      //printf("%g*%g=>  %g\n",delta_psi,_polar_weights(azim_index,p),fsr_flux[e]);
       track_flux(p,e) -= delta_psi;
     }
+    //printf("\n");
   }
-
+  //printf("\n");
   if (_cmfd->getMesh()->getCmfdOn()){
     if (curr_segment->_mesh_surface_fwd != -1 && fwd){
 
@@ -1033,6 +1044,7 @@ void CPUSolver::addSourceToScalarFlux() {
     sigma_t = _FSR_materials[r]->getSigmaT();
 
       for (int e=0; e < _num_groups; e++) {
+        printf("%d,%d,flux=%g,source=%g\n",r,e,_scalar_flux(r,e),_source(r,e));
         _scalar_flux(r,e) *= 0.5;
         _scalar_flux(r,e) = FOUR_PI * _reduced_source(r,e) +
                             (_scalar_flux(r,e) / (sigma_t[e] * volume));

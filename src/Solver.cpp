@@ -1,4 +1,5 @@
 #include "Solver.h"
+#include "stdio.h"
 
 
 /**
@@ -525,6 +526,7 @@ FP_PRECISION Solver::convergeSource(int max_iterations) {
                "since it does not contain a TrackGenerator");
 
   log_printf(NORMAL, "Converging the source...");
+  printf("test my change\n");
 
   /* Clear all timing data from a previous simulation run */
   clearTimerSplits();
@@ -563,17 +565,22 @@ FP_PRECISION Solver::convergeSource(int max_iterations) {
   flattenFSRFluxes(1.0);
   flattenFSRSources(1.0);
   zeroTrackFluxes();
-
+  
+  printf("before iteration, scalarflux[0]=%g\n",_scalar_flux[0]);
+  printf("vol = %g,%g\n", _FSR_volumes[0], _FSR_volumes[1]);
   /* Source iteration loop */
   for (int i=0; i < max_iterations; i++) {
-
+    printf("iteration = %d\n",i);
     log_printf(NORMAL, "Iteration %d: \tk_eff = %1.6f"
                "\tres = %1.3E", i, _k_eff, residual);
 
     normalizeFluxes();
-
+    printf("  scalarflux[0]=%g\n", _scalar_flux[0]);
     residual = computeFSRSources();
+    printf("  regionsource[0,0]=%g\n", _source[0]); 
+    printf("  regionsource[1,0]=%g\n", _source[_num_groups]); 
     transportSweep();
+    printf("  after sweep, scalarflux[0]=%g\n", _scalar_flux[0]);
     addSourceToScalarFlux();
 
     /* Update the flux with cmfd */
