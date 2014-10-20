@@ -1,41 +1,49 @@
 import sys
 import numpy
-fuelname = sys.argv[1]
-modedata=numpy.loadtxt('10gmode.py',delimiter=',',comments='[',unpack=False);
-fueldata=numpy.loadtxt(fuelname,delimiter=',',comments='[',unpack=False);
+
 print 'dataset={}'
 print 'dataset[\'Energy Groups\']=10'
 print 'dataset[\'Materials\']={}'
 print 'c5g7_dataset=dataset[\'Materials\']'
-print 'c5g7_dataset[\'UO2\']={}'
+
+fuelname = sys.argv[1]
+nfr = int(sys.argv[2])
+modedata=numpy.loadtxt('10gmode.py',delimiter=',',comments='[',unpack=False);
+fueldata=numpy.loadtxt(fuelname,delimiter=',',comments='[',unpack=False);
+matname=[]
+for i in range(nfr):
+  matname.append('\'UO2'+str(i+1)+'\'')
+
+  print 'c5g7_dataset['+matname[i]+']={}'
+  
+  print 'c5g7_dataset['+matname[i]+'][\'Total XS\']=['
+  print ', '.join(map(str,fueldata[0+i*15]))
+  print ']'
+  
+  print 'c5g7_dataset['+matname[i]+'][\'Absorption XS\']=['
+  print ', '.join(map(str,fueldata[1+i*15]))
+  print ']'
+  
+  ggxs = fueldata[2+i*15:12+i*15]
+  print 'c5g7_dataset['+matname[i]+'][\'Scattering XS\']=['
+  print ', '.join(map(str,ggxs.ravel()))
+  print ']'
+  
+  print 'c5g7_dataset['+matname[i]+'][\'Fission XS\']=['
+  print ', '.join(map(str,fueldata[12+i*15]))
+  print ']'
+  
+  print 'c5g7_dataset['+matname[i]+'][\'Nu Fission XS\']=['
+  print ', '.join(map(str,fueldata[13+i*15]))
+  print ']'
+  
+  print 'c5g7_dataset['+matname[i]+'][\'Chi\']=['
+  print ', '.join(map(str,fueldata[14+i*15]))
+  print ']'
+
+
+
 print 'c5g7_dataset[\'Water\']={}'
-
-print 'c5g7_dataset[\'UO2\'][\'Total XS\']=['
-print ', '.join(map(str,fueldata[0]))
-print ']'
-
-print 'c5g7_dataset[\'UO2\'][\'Absorption XS\']=['
-print ', '.join(map(str,fueldata[1]))
-print ']'
-
-ggxs = fueldata[2:12]
-print 'c5g7_dataset[\'UO2\'][\'Scattering XS\']=['
-print ', '.join(map(str,ggxs.ravel()))
-print ']'
-
-print 'c5g7_dataset[\'UO2\'][\'Fission XS\']=['
-print ', '.join(map(str,fueldata[12]))
-print ']'
-
-print 'c5g7_dataset[\'UO2\'][\'Nu Fission XS\']=['
-print ', '.join(map(str,fueldata[13]))
-print ']'
-
-print 'c5g7_dataset[\'UO2\'][\'Chi\']=['
-print ', '.join(map(str,fueldata[14]))
-print ']'
-
-
 
 print 'c5g7_dataset[\'Water\'][\'Total XS\']=['
 print ', '.join(map(str,modedata[0]))
