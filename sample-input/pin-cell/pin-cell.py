@@ -46,7 +46,11 @@ water_id = materials['Water'].getId()
 log.py_printf('NORMAL', 'Creating surfaces...')
 
 circle = Circle(x=0.0, y=0.0, radius=0.4096)
-circle1 = Circle(x=0.0, y=0.0, radius=0.4096/2)
+incircles=[]
+for i in range(nfr/4-1):
+  incircles.append(Circle(x=0.0, y=0.0, radius=0.4096/(nfr/4)*(i+1)))
+#add fuel pin circle to inner circles
+incircles.append(Circle(x=0.0, y=0.0, radius=0.4096))
 scale=1
 left = XPlane(x=-0.63*scale)
 right = XPlane(x=0.63*scale)
@@ -81,9 +85,18 @@ if(1==nfr):
   cells[0].addSurface(halfspace=-1, surface=circle) 
 else:
   for ir in range(nfr):
-    cells[ir%4].addSurface(halfspace=-1, surface=circle)   
-    cells[ir%4].addSurface(halfspace=signs[(ir%4)*2], surface=vertical)   
-    cells[ir%4].addSurface(halfspace=signs[(ir%4)*2+1], surface=horizontal)   
+    isec = ir%4
+    if(ir/4):
+      #ir/4>=1, ring definition requires 2 circle
+      cells[ir].addSurface(halfspace=-1, surface=incircles[ir/4])   
+      cells[ir].addSurface(halfspace=+1, surface=incircles[ir/4-1])   
+      cells[ir].addSurface(halfspace=signs[(isec)*2], surface=vertical)   
+      cells[ir].addSurface(halfspace=signs[(isec)*2+1], surface=horizontal)   
+    else:
+      #ir/4==0, innerest ring requires only 1 circle
+      cells[ir].addSurface(halfspace=-1, surface=incircles[0])   
+      cells[ir].addSurface(halfspace=signs[(isec)*2], surface=vertical)   
+      cells[ir].addSurface(halfspace=signs[(isec)*2+1], surface=horizontal)   
 
 #moderator
 cells[nfr].addSurface(halfspace=+1, surface=circle)
@@ -148,7 +161,7 @@ log.py_printf('NORMAL', 'Plotting data...')
 #plotter.plot_tracks(track_generator)
 #plotter.plot_segments(track_generator)
 #plotter.plot_materials(geometry, gridsize=500)
-plotter.plot_cells(geometry, gridsize=500)
+#plotter.plot_cells(geometry, gridsize=500)
 #plotter.plot_flat_source_regions(geometry, gridsize=500)
 #plotter.plot_fluxes(geometry, solver, energy_groups=[1,2,3,4,5,6,7])
 
