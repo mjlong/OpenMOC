@@ -3,7 +3,7 @@ import openmoc.log as log
 import openmoc.plotter as plotter
 import openmoc.materialize as materialize
 from openmoc.options import Options
-
+import sys
 
 ###############################################################################
 #######################   Main Simulation Parameters   ########################
@@ -12,10 +12,12 @@ from openmoc.options import Options
 options = Options()
 
 num_threads = options.getNumThreads()
-track_spacing = options.getTrackSpacing()
-num_azim = options.getNumAzimAngles()
-tolerance = options.getTolerance()
-max_iters = options.getMaxIterations()
+#track_spacing = options.getTrackSpacing()
+#num_azim = options.getNumAzimAngles()
+num_azim=64
+track_spacing=0.01;
+tolerance = 1.0E-6#options.getTolerance()
+max_iters = 500#options.getMaxIterations()
 
 log.set_log_level('NORMAL')
 
@@ -26,7 +28,7 @@ log.set_log_level('NORMAL')
 
 log.py_printf('NORMAL', 'Importing materials data from HDF5...')
 
-materials = materialize.materialize('../c5g7-materials.h5')
+materials = materialize.materialize(sys.argv[1])#../c5g7-materials.py')
 
 uo2_id = materials['UO2'].getId()
 water_id = materials['Water'].getId()
@@ -38,11 +40,15 @@ water_id = materials['Water'].getId()
 
 log.py_printf('NORMAL', 'Creating surfaces...')
 
-circle = Circle(x=0.0, y=0.0, radius=1.0)
-left = XPlane(x=-2.0)
-right = XPlane(x=2.0)
-top = YPlane(y=2.0)
-bottom = YPlane(y=-2.0)
+circle = Circle(x=0.0, y=0.0, radius=0.4096)
+circle1 = Circle(x=0.0, y=0.0, radius=0.4096/2)
+scale=1
+left = XPlane(x=-0.63*scale)
+right = XPlane(x=0.63*scale)
+top = YPlane(y=0.63*scale)
+bottom = YPlane(y=-0.63*scale)
+horizontal = YPlane(y=0.)
+vertical   = XPlane(x=0.)
 
 left.setBoundaryType(REFLECTIVE)
 right.setBoundaryType(REFLECTIVE)
@@ -57,16 +63,40 @@ bottom.setBoundaryType(REFLECTIVE)
 log.py_printf('NORMAL', 'Creating cells...')
 
 cells = []
+#cells.append(CellBasic(universe=1, material=uo2_id,rings=1,sectors=4))
 cells.append(CellBasic(universe=1, material=uo2_id))
+cells.append(CellBasic(universe=1, material=uo2_id))
+cells.append(CellBasic(universe=1, material=uo2_id))
+cells.append(CellBasic(universe=1, material=uo2_id))
+
 cells.append(CellBasic(universe=1, material=water_id))
 cells.append(CellFill(universe=0, universe_fill=2))
 
-cells[0].addSurface(halfspace=-1, surface=circle)
-cells[1].addSurface(halfspace=+1, surface=circle)
-cells[2].addSurface(halfspace=+1, surface=left)
-cells[2].addSurface(halfspace=-1, surface=right)
-cells[2].addSurface(halfspace=+1, surface=bottom)
-cells[2].addSurface(halfspace=-1, surface=top)
+#fuel
+cells[0].addSurface(halfspace=-1, surface=circle)   
+cells[0].addSurface(halfspace=+1, surface=vertical)   
+cells[0].addSurface(halfspace=+1, surface=horizontal)   
+
+cells[1].addSurface(halfspace=-1, surface=circle)   
+cells[1].addSurface(halfspace=-1, surface=vertical)   
+cells[1].addSurface(halfspace=+1, surface=horizontal)   
+
+cells[2].addSurface(halfspace=-1, surface=circle)   
+cells[2].addSurface(halfspace=-1, surface=vertical)   
+cells[2].addSurface(halfspace=-1, surface=horizontal)   
+
+cells[3].addSurface(halfspace=-1, surface=circle)   
+cells[3].addSurface(halfspace=+1, surface=vertical)   
+cells[3].addSurface(halfspace=-1, surface=horizontal)   
+
+nfr=4 #num of fuel region
+#moderator
+cells[nfr].addSurface(halfspace=+1, surface=circle)
+#universe=0
+cells[nfr+1].addSurface(halfspace=+1, surface=left)
+cells[nfr+1].addSurface(halfspace=-1, surface=right)
+cells[nfr+1].addSurface(halfspace=+1, surface=bottom)
+cells[nfr+1].addSurface(halfspace=-1, surface=top)
 
 
 ###############################################################################
@@ -75,7 +105,7 @@ cells[2].addSurface(halfspace=-1, surface=top)
 
 log.py_printf('NORMAL', 'Creating simple pin cell lattice...')
 
-lattice = Lattice(id=2, width_x=4.0, width_y=4.0)
+lattice = Lattice(id=2, width_x=1.26*scale, width_y=1.26*scale)
 lattice.setLatticeCells([[1]])
 
 
@@ -123,7 +153,7 @@ log.py_printf('NORMAL', 'Plotting data...')
 #plotter.plot_tracks(track_generator)
 #plotter.plot_segments(track_generator)
 #plotter.plot_materials(geometry, gridsize=500)
-#plotter.plot_cells(geometry, gridsize=500)
+plotter.plot_cells(geometry, gridsize=500)
 #plotter.plot_flat_source_regions(geometry, gridsize=500)
 #plotter.plot_fluxes(geometry, solver, energy_groups=[1,2,3,4,5,6,7])
 
