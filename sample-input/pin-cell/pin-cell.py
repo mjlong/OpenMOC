@@ -29,8 +29,13 @@ log.set_log_level('NORMAL')
 log.py_printf('NORMAL', 'Importing materials data from HDF5...')
 
 materials = materialize.materialize(sys.argv[1])#../c5g7-materials.py')
+nfr = int(sys.argv[2])
 
-uo2_id = materials['UO2'].getId()
+uo2_id=[]
+for i in range(nfr):
+  matname = 'UO2'+str(i+1)
+  uo2_id.append(materials[matname].getId())
+#uo2_id = materials['UO2'].getId()
 water_id = materials['Water'].getId()
 
 
@@ -64,32 +69,22 @@ log.py_printf('NORMAL', 'Creating cells...')
 
 cells = []
 #cells.append(CellBasic(universe=1, material=uo2_id,rings=1,sectors=4))
-cells.append(CellBasic(universe=1, material=uo2_id))
-cells.append(CellBasic(universe=1, material=uo2_id))
-cells.append(CellBasic(universe=1, material=uo2_id))
-cells.append(CellBasic(universe=1, material=uo2_id))
+for i in range(nfr):
+  cells.append(CellBasic(universe=1, material=uo2_id[i]))
 
 cells.append(CellBasic(universe=1, material=water_id))
 cells.append(CellFill(universe=0, universe_fill=2))
 
 #fuel
-cells[0].addSurface(halfspace=-1, surface=circle)   
-cells[0].addSurface(halfspace=+1, surface=vertical)   
-cells[0].addSurface(halfspace=+1, surface=horizontal)   
+signs = [1,1,-1,1,-1,-1,1,-1]
+if(1==nfr):
+  cells[0].addSurface(halfspace=-1, surface=circle) 
+else:
+  for ir in range(nfr):
+    cells[ir%4].addSurface(halfspace=-1, surface=circle)   
+    cells[ir%4].addSurface(halfspace=signs[(ir%4)*2], surface=vertical)   
+    cells[ir%4].addSurface(halfspace=signs[(ir%4)*2+1], surface=horizontal)   
 
-cells[1].addSurface(halfspace=-1, surface=circle)   
-cells[1].addSurface(halfspace=-1, surface=vertical)   
-cells[1].addSurface(halfspace=+1, surface=horizontal)   
-
-cells[2].addSurface(halfspace=-1, surface=circle)   
-cells[2].addSurface(halfspace=-1, surface=vertical)   
-cells[2].addSurface(halfspace=-1, surface=horizontal)   
-
-cells[3].addSurface(halfspace=-1, surface=circle)   
-cells[3].addSurface(halfspace=+1, surface=vertical)   
-cells[3].addSurface(halfspace=-1, surface=horizontal)   
-
-nfr=4 #num of fuel region
 #moderator
 cells[nfr].addSurface(halfspace=+1, surface=circle)
 #universe=0
