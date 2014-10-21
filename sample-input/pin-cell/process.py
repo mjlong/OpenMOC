@@ -8,8 +8,22 @@ print 'c5g7_dataset=dataset[\'Materials\']'
 
 fuelname = sys.argv[1]
 nfr = int(sys.argv[2])
-modedata=numpy.loadtxt('10gmode.py',delimiter=',',comments='[',unpack=False);
-fueldata=numpy.loadtxt(fuelname,delimiter=',',comments='[',unpack=False);
+modedata0=numpy.loadtxt('10gmode.py',delimiter=',',comments='[',unpack=False);
+modedata0[2:12]=modedata0[2:12][::-1] 
+modedata=numpy.zeros([15,10])
+for i in range(14):
+   modedata[i,:]=modedata0[i][::-1]
+modedata[14,:]=modedata0[14][:]
+
+fueldata0=numpy.loadtxt(fuelname,delimiter=',',comments='[',unpack=False);
+fueldata=numpy.zeros([15*nfr,10])
+temp = numpy.zeros([15,10])
+for ir in range(nfr):
+  temp = numpy.copy(fueldata0[ir*15:(ir*15+15)])
+  temp[2:12]=temp[2:12][::-1] 
+  for i in range(14):
+     fueldata[ir*15+i,:]=temp[i][::-1]
+  fueldata[14+ir*15,:]=temp[14][:]
 matname=[]
 for i in range(nfr):
   matname.append('\'UO2'+str(i+1)+'\'')
