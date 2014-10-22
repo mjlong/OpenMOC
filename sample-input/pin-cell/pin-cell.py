@@ -4,6 +4,7 @@ import openmoc.plotter as plotter
 import openmoc.materialize as materialize
 from openmoc.options import Options
 import sys
+import math
 
 ###############################################################################
 #######################   Main Simulation Parameters   ########################
@@ -48,7 +49,8 @@ log.py_printf('NORMAL', 'Creating surfaces...')
 circle = Circle(x=0.0, y=0.0, radius=0.4096)
 incircles=[]
 for i in range(nfr/4-1):
-  incircles.append(Circle(x=0.0, y=0.0, radius=0.4096/(nfr/4)*(i+1)))
+  incircles.append(Circle(x=0.0, y=0.0, radius=0.4096/math.sqrt(nfr/4)*math.sqrt(i+1)))
+  #these sub circles create regions with same volumes
 #add fuel pin circle to inner circles
 incircles.append(Circle(x=0.0, y=0.0, radius=0.4096))
 scale=1
